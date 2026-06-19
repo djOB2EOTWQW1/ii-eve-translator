@@ -132,7 +132,8 @@ Item {
                     text: hasTranslation ? root.translatedText : ""
                     GroupButton {
                         id: copyButton
-                        baseWidth: height
+                        baseWidth: 36
+                        implicitHeight: 36
                         buttonRadius: Appearance.rounding.small
                         enabled: outputCanvas.displayedText.trim().length > 0
                         contentItem: MaterialSymbol {
@@ -148,7 +149,8 @@ Item {
                     }
                     GroupButton {
                         id: searchButton
-                        baseWidth: height
+                        baseWidth: 36
+                        implicitHeight: 36
                         buttonRadius: Appearance.rounding.small
                         enabled: outputCanvas.displayedText.trim().length > 0
                         contentItem: MaterialSymbol {
@@ -188,7 +190,8 @@ Item {
             }
             GroupButton {
                 id: pasteButton
-                baseWidth: height
+                baseWidth: 36
+                implicitHeight: 36
                 buttonRadius: Appearance.rounding.small
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
@@ -203,7 +206,8 @@ Item {
             }
             GroupButton {
                 id: deleteButton
-                baseWidth: height
+                baseWidth: 36
+                implicitHeight: 36
                 buttonRadius: Appearance.rounding.small
                 enabled: inputCanvas.inputTextArea.text.length > 0
                 contentItem: MaterialSymbol {
