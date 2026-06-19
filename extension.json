@@ -1,0 +1,17 @@
+{
+  "name": "Translator",
+  "description": "Sidebar translator page (uses the `trans` CLI). Extracted from ii-eve as a sidebar-left extension page.",
+  "version": "1.0.0",
+  "author": "djOB2EOTWQW1",
+  "icon": "translate",
+  "contributes": {
+    "sidebarLeftPages": [
+      {
+        "identifier": "translator",
+        "title": "Translator",
+        "icon": "translate",
+        "component": "src/Translator.qml"
+      }
+    ]
+  }
+}
