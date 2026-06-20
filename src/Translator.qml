@@ -167,6 +167,23 @@ Item {
         }
     }
 
+    Process {
+        id: ttsProc
+        command: ["true"]
+    }
+
+    function speak(text, lang) {
+        const t = (text || "").trim();
+        if (t.length === 0) return;
+        ttsProc.running = false;
+        ttsProc.command = ["bash", "-c",
+            `trans -speak -no-translate -no-bidi`
+            + ` -source '${StringUtils.shellSingleQuoteEscape(lang || "auto")}'`
+            + ` -target '${StringUtils.shellSingleQuoteEscape(lang || "auto")}'`
+            + ` '${StringUtils.shellSingleQuoteEscape(t)}'`];
+        ttsProc.running = true;
+    }
+
     GridLayout {
         anchors {
             fill: parent
@@ -213,6 +230,19 @@ Item {
                 onInputTextChanged: translateTimer.restart()
 
                 GroupButton {
+                    baseWidth: 36
+                    implicitHeight: 36
+                    buttonRadius: Appearance.rounding.small
+                    enabled: inputCanvas.inputTextArea.text.trim().length > 0
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        iconSize: Appearance.font.pixelSize.larger
+                        text: "volume_up"
+                        color: enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
+                    }
+                    onClicked: root.speak(inputCanvas.inputTextArea.text, root.sourceLanguage)
+                }
+                GroupButton {
                     id: pasteButton
                     baseWidth: 36
                     implicitHeight: 36
@@ -258,6 +288,19 @@ Item {
                 property bool hasTranslation: (root.translatedText.trim().length > 0)
                 text: hasTranslation ? root.translatedText : ""
 
+                GroupButton {
+                    baseWidth: 36
+                    implicitHeight: 36
+                    buttonRadius: Appearance.rounding.small
+                    enabled: outputCanvas.displayedText.trim().length > 0
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        iconSize: Appearance.font.pixelSize.larger
+                        text: "volume_up"
+                        color: enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
+                    }
+                    onClicked: root.speak(outputCanvas.displayedText, root.targetLanguage)
+                }
                 GroupButton {
                     id: copyButton
                     baseWidth: 36
