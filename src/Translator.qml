@@ -3,6 +3,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import "translator"
+import "translator/TransParse.js" as TransParse
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -143,6 +144,7 @@ Item {
             // With -brief mode, we get output with no metadata
             root.translatedText = translateProc.buffer.trim();
             historyRecordTimer.restart();
+            root.fetchDetails();
         }
     }
 
@@ -182,6 +184,42 @@ Item {
             + ` -target '${StringUtils.shellSingleQuoteEscape(lang || "auto")}'`
             + ` '${StringUtils.shellSingleQuoteEscape(t)}'`];
         ttsProc.running = true;
+    }
+
+    property var dictionaryEntries: []
+    property var sentenceAlternatives: []
+    readonly property bool isSingleWord: TransParse.isSingleWord(root.inputField ? root.inputField.text : "")
+
+    Process {
+        id: detailProc
+        property string buffer: ""
+        command: ["true"]
+        stdout: SplitParser { onRead: data => detailProc.buffer += data + "\n" }
+        onExited: (code, status) => {
+            if (root.isSingleWord) {
+                root.dictionaryEntries = TransParse.parseDictionary(detailProc.buffer);
+                root.sentenceAlternatives = [];
+            } else {
+                root.sentenceAlternatives = TransParse.parseAlternatives(detailProc.buffer);
+                root.dictionaryEntries = [];
+            }
+        }
+    }
+
+    function fetchDetails() {
+        const text = root.inputField.text.trim();
+        if (text.length === 0) { root.dictionaryEntries = []; root.sentenceAlternatives = []; return; }
+        detailProc.running = false;
+        detailProc.buffer = "";
+        const base = `-no-bidi -source '${StringUtils.shellSingleQuoteEscape(root.sourceLanguage)}'`
+            + ` -target '${StringUtils.shellSingleQuoteEscape(root.targetLanguage)}'`
+            + ` '${StringUtils.shellSingleQuoteEscape(text)}'`;
+        if (root.isSingleWord) {
+            detailProc.command = ["bash", "-c", `trans -d ${base}`];
+        } else {
+            detailProc.command = ["bash", "-c", `trans -show-translation n -show-alternatives y ${base}`];
+        }
+        detailProc.running = true;
     }
 
     GridLayout {
@@ -338,6 +376,14 @@ Item {
                     }
                 }
             }
+        }
+
+        DictionaryCard {
+            Layout.fillWidth: true
+            Layout.columnSpan: root.wide ? 2 : 1
+            dictionaryEntries: root.dictionaryEntries
+            sentenceAlternatives: root.sentenceAlternatives
+            onAlternativeChosen: (text) => { root.translatedText = text }
         }
     }
 
