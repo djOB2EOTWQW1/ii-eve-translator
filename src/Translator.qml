@@ -34,6 +34,9 @@ Item {
     property string targetLanguage: Config.options.language.translator.targetLanguage
     property string sourceLanguage: Config.options.language.translator.sourceLanguage
     property string hostLanguage: targetLanguage
+    property string detectedLanguage: ""
+    property string extId: "ii-eve-translator"
+    property var recentLanguages: ExtensionManager.getExtensionConfig(root.extId, "recentLanguages", ["auto", "en"])
 
     // States
     property bool showLanguageSelector: false
@@ -42,6 +45,35 @@ Item {
     function showLanguageSelectorDialog(isTargetLang: bool) {
         root.languageSelectorTarget = isTargetLang;
         root.showLanguageSelector = true
+    }
+
+    function addRecentLanguage(lang) {
+        if (!lang || lang === "auto") return;
+        let list = Array.from(root.recentLanguages).filter(l => l !== lang);
+        list.unshift(lang);
+        list = list.slice(0, 6);
+        root.recentLanguages = list;
+        ExtensionManager.setExtensionConfig(root.extId, "recentLanguages", list);
+    }
+
+    function swapLanguages() {
+        if (root.sourceLanguage === "auto") {
+            // Can't swap "auto" into target — use the detected language if known
+            if (!root.detectedLanguage) return;
+            root.sourceLanguage = root.targetLanguage;
+            root.targetLanguage = root.detectedLanguage;
+        } else {
+            const s = root.sourceLanguage;
+            root.sourceLanguage = root.targetLanguage;
+            root.targetLanguage = s;
+        }
+        Config.options.language.translator.sourceLanguage = root.sourceLanguage;
+        Config.options.language.translator.targetLanguage = root.targetLanguage;
+        // Translate the current OUTPUT back through the swapped pair
+        if (root.translatedText.trim().length > 0) {
+            root.inputField.text = root.translatedText;
+        }
+        translateTimer.restart();
     }
 
     onFocusChanged: (focus) => {
@@ -114,17 +146,34 @@ Item {
         rowSpacing: root.padding
         columnSpacing: root.padding
 
+        LanguageBar {
+            Layout.fillWidth: true
+            Layout.columnSpan: root.wide ? 2 : 1
+            sourceLanguage: root.sourceLanguage
+            targetLanguage: root.targetLanguage
+            detectedLanguage: root.detectedLanguage
+            recentLanguages: root.recentLanguages
+            onSourceClicked: root.showLanguageSelectorDialog(false)
+            onTargetClicked: root.showLanguageSelectorDialog(true)
+            onSwapClicked: root.swapLanguages()
+            onHistoryRequested: {}
+            onRecentPicked: (lang, isTarget) => {
+                if (isTarget) {
+                    root.targetLanguage = lang;
+                    Config.options.language.translator.targetLanguage = lang;
+                } else {
+                    root.sourceLanguage = lang;
+                    Config.options.language.translator.sourceLanguage = lang;
+                }
+                translateTimer.restart();
+            }
+        }
+
         // Source language + input
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: root.padding
-
-            LanguageSelectorButton {
-                id: sourceLanguageButton
-                displayText: root.sourceLanguage
-                onClicked: root.showLanguageSelectorDialog(false)
-            }
 
             TextCanvas {
                 id: inputCanvas
@@ -170,12 +219,6 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: root.padding
-
-            LanguageSelectorButton {
-                id: targetLanguageButton
-                displayText: root.targetLanguage
-                onClicked: root.showLanguageSelectorDialog(true)
-            }
 
             TextCanvas {
                 id: outputCanvas
@@ -250,6 +293,7 @@ Item {
                     Config.options.language.translator.sourceLanguage = result; // Save to config
                 }
 
+                root.addRecentLanguage(result);
                 translateTimer.restart(); // Restart translation after language change
             }
         }
