@@ -37,6 +37,28 @@ Item {
     property string detectedLanguage: ""
     property string extId: "ii-eve-translator"
     property var recentLanguages: ExtensionManager.getExtensionConfig(root.extId, "recentLanguages", ["auto", "en"])
+    property var history: ExtensionManager.getExtensionConfig(root.extId, "translationHistory", [])
+
+    function recordHistory() {
+        const input = root.inputField.text.trim();
+        const output = root.translatedText.trim();
+        if (input.length === 0 || output.length === 0) return;
+        let hist = Array.from(root.history).filter(e =>
+            !(e.input === input && e.source === root.sourceLanguage && e.target === root.targetLanguage));
+        hist.unshift({ input, output, source: root.sourceLanguage, target: root.targetLanguage });
+        hist = hist.slice(0, 13);
+        root.history = hist;
+        ExtensionManager.setExtensionConfig(root.extId, "translationHistory", hist);
+    }
+
+    function restoreHistory(entry) {
+        root.sourceLanguage = entry.source;
+        root.targetLanguage = entry.target;
+        Config.options.language.translator.sourceLanguage = entry.source;
+        Config.options.language.translator.targetLanguage = entry.target;
+        root.inputField.text = entry.input;
+        translateTimer.restart();
+    }
 
     // States
     property bool showLanguageSelector: false
@@ -83,6 +105,13 @@ Item {
     }
 
     Timer {
+        id: historyRecordTimer
+        interval: 1200
+        repeat: false
+        onTriggered: root.recordHistory()
+    }
+
+    Timer {
         id: translateTimer
         interval: Config.options.sidebar.translator.delay
         repeat: false
@@ -113,6 +142,7 @@ Item {
         onExited: (exitCode, exitStatus) => {
             // With -brief mode, we get output with no metadata
             root.translatedText = translateProc.buffer.trim();
+            historyRecordTimer.restart();
         }
     }
 
@@ -156,7 +186,7 @@ Item {
             onSourceClicked: root.showLanguageSelectorDialog(false)
             onTargetClicked: root.showLanguageSelectorDialog(true)
             onSwapClicked: root.swapLanguages()
-            onHistoryRequested: {}
+            onHistoryRequested: historyPopover.open()
             onRecentPicked: (lang, isTarget) => {
                 if (isTarget) {
                     root.targetLanguage = lang;
@@ -263,6 +293,33 @@ Item {
                         }
                         Qt.openUrlExternally(url);
                     }
+                }
+            }
+        }
+    }
+
+    Loader {
+        id: historyPopover
+        anchors.fill: parent
+        active: false
+        visible: active
+        z: 9998
+        function open() { active = true }
+        function close() { active = false }
+        sourceComponent: Item {
+            MouseArea { // scrim
+                anchors.fill: parent
+                onClicked: historyPopover.close()
+            }
+            HistoryPopover {
+                anchors.centerIn: parent
+                width: Math.min(parent.width - 40, 480)
+                height: Math.min(parent.height - 80, 520)
+                history: root.history
+                onCloseRequested: historyPopover.close()
+                onEntryPicked: (entry) => {
+                    root.restoreHistory(entry);
+                    historyPopover.close();
                 }
             }
         }
