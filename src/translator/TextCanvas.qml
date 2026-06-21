@@ -12,7 +12,7 @@ Rectangle {
     property string placeholderText
     property string text: ""
     property var inputTextArea: isInput ? inputLoader.item : undefined
-    readonly property string displayedText: isInput ? inputLoader.item.text : 
+    readonly property string displayedText: isInput ? inputLoader.item.text :
         root.text.length > 0 ? outputLoader.item.text : ""
     default property alias actionButtons: actions.data
     Layout.fillWidth: true
@@ -20,7 +20,14 @@ Rectangle {
     color: Appearance.colors.colLayer2
     radius: Appearance.rounding.normal
 
+    // Interactive output mode
+    property bool interactive: false
+    property var synonyms: []
+    property int activeWordIndex: -1
+
     signal inputTextChanged(); // Signal emitted when text changes
+    signal wordClicked(int wordIndex, string word)
+    signal synonymChosen(int wordIndex, string synonym)
 
     ColumnLayout {
         id: inputColumn
@@ -50,13 +57,29 @@ Rectangle {
             active: !root.isInput
             visible: !root.isInput
             Layout.fillWidth: true
-            sourceComponent: StyledText { // Output area
-                id: outputTextArea
-                padding: 15
-                wrapMode: Text.Wrap
-                font.pixelSize: Appearance.font.pixelSize.small
-                color: root.text.length > 0 ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
-                text: root.text.length > 0 ? root.text : root.placeholderText
+            sourceComponent: (root.interactive && root.text.length > 0)
+                ? interactiveComp : plainComp
+            Component {
+                id: plainComp
+                StyledText {
+                    padding: 15
+                    wrapMode: Text.Wrap
+                    font.pixelSize: Appearance.font.pixelSize.small
+                    color: root.text.length > 0 ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
+                    text: root.text.length > 0 ? root.text : root.placeholderText
+                }
+            }
+            Component {
+                id: interactiveComp
+                InteractiveTranslation {
+                    width: outputLoader.width - 30
+                    x: 15
+                    text: root.text
+                    synonyms: root.synonyms
+                    activeIndex: root.activeWordIndex
+                    onWordClicked: (i, w) => root.wordClicked(i, w)
+                    onSynonymChosen: (i, s) => root.synonymChosen(i, s)
+                }
             }
         }
 

@@ -190,6 +190,9 @@ Item {
     property var sentenceAlternatives: []
     readonly property bool isSingleWord: TransParse.isSingleWord(root.inputField ? root.inputField.text : "")
 
+    property var wordSynonyms: []        // current popover synonyms
+    property int activeWordIndex: -1
+
     Process {
         id: detailProc
         property string buffer: ""
@@ -220,6 +223,45 @@ Item {
             detailProc.command = ["bash", "-c", `trans -show-translation n -show-alternatives y ${base}`];
         }
         detailProc.running = true;
+    }
+
+    Process {
+        id: wordLookupProc
+        property string buffer: ""
+        command: ["true"]
+        stdout: SplitParser { onRead: data => wordLookupProc.buffer += data + "\n" }
+        onExited: (code, status) => {
+            const entries = TransParse.parseDictionary(wordLookupProc.buffer);
+            let syn = [];
+            for (const e of entries) for (const m of e.meanings) syn = syn.concat(m.synonyms);
+            // de-dup, drop the original word, cap
+            root.wordSynonyms = Array.from(new Set(syn)).slice(0, 8);
+        }
+    }
+
+    // Synonyms of a TARGET-language word: look it up target->source so the
+    // dictionary's "Синонимы" come back in the target language.
+    function lookupWord(word) {
+        wordLookupProc.running = false;
+        wordLookupProc.buffer = "";
+        wordLookupProc.command = ["bash", "-c",
+            `trans -d -no-bidi -source '${StringUtils.shellSingleQuoteEscape(root.targetLanguage)}'`
+            + ` -target '${StringUtils.shellSingleQuoteEscape(root.sourceLanguage === "auto" ? "en" : root.sourceLanguage)}'`
+            + ` '${StringUtils.shellSingleQuoteEscape(word)}'`];
+        wordLookupProc.running = true;
+    }
+
+    function replaceOutputWord(wordIndex, newWord) {
+        const words = root.translatedText.split(/(\s+)/); // keep separators
+        // map word index (non-space tokens) to token index
+        let count = -1;
+        for (let i = 0; i < words.length; ++i) {
+            if (/\S/.test(words[i])) {
+                count++;
+                if (count === wordIndex) { words[i] = newWord; break; }
+            }
+        }
+        root.translatedText = words.join("");
     }
 
     GridLayout {
@@ -325,6 +367,11 @@ Item {
                 placeholderText: Translation.tr("Translation goes here...")
                 property bool hasTranslation: (root.translatedText.trim().length > 0)
                 text: hasTranslation ? root.translatedText : ""
+                interactive: true
+                synonyms: root.wordSynonyms
+                activeWordIndex: root.activeWordIndex
+                onWordClicked: (i, w) => { root.activeWordIndex = i; root.lookupWord(w); }
+                onSynonymChosen: (i, s) => { root.replaceOutputWord(i, s); root.activeWordIndex = -1; root.wordSynonyms = []; }
 
                 GroupButton {
                     baseWidth: 36
