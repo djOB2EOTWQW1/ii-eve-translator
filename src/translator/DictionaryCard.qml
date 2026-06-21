@@ -13,7 +13,7 @@ Rectangle {
     signal alternativeChosen(string text)
 
     visible: dictionaryEntries.length > 0 || sentenceAlternatives.length > 0
-    implicitHeight: visible ? contentCol.implicitHeight + 24 : 0
+    implicitHeight: (dictionaryEntries.length > 0 || sentenceAlternatives.length > 0) ? contentCol.implicitHeight + 24 : 0
     color: Appearance.colors.colLayer2
     radius: Appearance.rounding.normal
 
