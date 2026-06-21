@@ -145,6 +145,8 @@ Item {
             root.translatedText = translateProc.buffer.trim();
             historyRecordTimer.restart();
             root.fetchDetails();
+            root.activeWordIndex = -1;
+            root.wordSynonyms = [];
         }
     }
 

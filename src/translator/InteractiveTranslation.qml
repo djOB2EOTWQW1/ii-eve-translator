@@ -22,6 +22,7 @@ Flow {
         delegate: Text {
             required property var modelData
             required property int index
+            readonly property int wordIndex: index
             text: modelData + " "
             font.pixelSize: Appearance.font.pixelSize.small
             color: Appearance.colors.colOnLayer1
@@ -59,7 +60,7 @@ Flow {
                                 buttonRadius: Appearance.rounding.small
                                 colBackground: Appearance.colors.colLayer1
                                 colBackgroundHover: Appearance.colors.colSecondaryContainer
-                                onClicked: root.synonymChosen(index, modelData)
+                                onClicked: root.synonymChosen(wordIndex, modelData)
                                 contentItem: StyledText {
                                     id: synText
                                     anchors.centerIn: parent

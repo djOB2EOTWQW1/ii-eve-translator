@@ -12,8 +12,9 @@ Rectangle {
     property string placeholderText
     property string text: ""
     property var inputTextArea: isInput ? inputLoader.item : undefined
-    readonly property string displayedText: isInput ? inputLoader.item.text :
-        root.text.length > 0 ? outputLoader.item.text : ""
+    readonly property string displayedText: isInput
+        ? (inputLoader.item ? inputLoader.item.text : "")
+        : (root.text.length > 0 && outputLoader.item ? outputLoader.item.text : "")
     default property alias actionButtons: actions.data
     Layout.fillWidth: true
     implicitHeight: Math.max(150, inputColumn.implicitHeight)
@@ -74,6 +75,7 @@ Rectangle {
                 InteractiveTranslation {
                     width: outputLoader.width - 30
                     x: 15
+                    y: 15
                     text: root.text
                     synonyms: root.synonyms
                     activeIndex: root.activeWordIndex
