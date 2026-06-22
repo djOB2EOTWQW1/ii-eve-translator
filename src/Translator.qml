@@ -97,6 +97,7 @@ Item {
             root.inputField.text = root.translatedText;
         }
         translateTimer.restart();
+        root.detectedLanguage = "";
     }
 
     onFocusChanged: (focus) => {
@@ -147,6 +148,8 @@ Item {
             root.fetchDetails();
             root.activeWordIndex = -1;
             root.wordSynonyms = [];
+            if (root.sourceLanguage === "auto") root.detectLanguage(root.inputField.text);
+            else root.detectedLanguage = "";
         }
     }
 
@@ -209,6 +212,29 @@ Item {
                 root.dictionaryEntries = [];
             }
         }
+    }
+
+    Process {
+        id: detectProc
+        property string buffer: ""
+        command: ["true"]
+        stdout: SplitParser { onRead: data => detectProc.buffer += data + "\n" }
+        onExited: (code, status) => {
+            // `trans -identify` prints a verbose block with a "Code   <xx>" line.
+            // Best-effort: leave detectedLanguage empty if it failed (e.g. Null response).
+            const m = TransParse.stripAnsi(detectProc.buffer).match(/^Code\s+(\S+)/m);
+            root.detectedLanguage = m ? m[1] : "";
+        }
+    }
+
+    function detectLanguage(text) {
+        const t = (text || "").trim();
+        if (t.length === 0) { root.detectedLanguage = ""; return; }
+        detectProc.running = false;
+        detectProc.buffer = "";
+        detectProc.command = ["bash", "-c",
+            `trans -no-bidi -identify '${StringUtils.shellSingleQuoteEscape(t)}'`];
+        detectProc.running = true;
     }
 
     function fetchDetails() {
