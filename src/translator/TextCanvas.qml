@@ -14,7 +14,7 @@ Rectangle {
     property var inputTextArea: isInput ? inputLoader.item : undefined
     readonly property string displayedText: isInput
         ? (inputLoader.item ? inputLoader.item.text : "")
-        : (root.text.length > 0 && outputLoader.item ? outputLoader.item.text : "")
+        : (root.text.length > 0 ? root.text : "")
     default property alias actionButtons: actions.data
     Layout.fillWidth: true
     implicitHeight: Math.max(150, inputColumn.implicitHeight)
@@ -97,7 +97,7 @@ Rectangle {
                 visible: root.isInput
                 Layout.leftMargin: 10
                 sourceComponent: Text {
-                    text: Translation.tr("%1 characters").arg(inputLoader.item.text.length)
+                    text: Translation.tr("%1 characters").arg(inputLoader.item ? inputLoader.item.text.length : 0)
                     color: Appearance.colors.colOnLayer1
                     font.pixelSize: Appearance.font.pixelSize.smaller
                 }

@@ -201,10 +201,11 @@ Item {
     Process {
         id: detailProc
         property string buffer: ""
+        property bool wasWord: false
         command: ["true"]
         stdout: SplitParser { onRead: data => detailProc.buffer += data + "\n" }
         onExited: (code, status) => {
-            if (root.isSingleWord) {
+            if (detailProc.wasWord) {
                 root.dictionaryEntries = TransParse.parseDictionary(detailProc.buffer);
                 root.sentenceAlternatives = [];
             } else {
@@ -242,6 +243,7 @@ Item {
         if (text.length === 0) { root.dictionaryEntries = []; root.sentenceAlternatives = []; return; }
         detailProc.running = false;
         detailProc.buffer = "";
+        detailProc.wasWord = root.isSingleWord;
         const base = `-no-bidi -source '${StringUtils.shellSingleQuoteEscape(root.sourceLanguage)}'`
             + ` -target '${StringUtils.shellSingleQuoteEscape(root.targetLanguage)}'`
             + ` '${StringUtils.shellSingleQuoteEscape(text)}'`;
@@ -320,6 +322,7 @@ Item {
                     root.sourceLanguage = lang;
                     Config.options.language.translator.sourceLanguage = lang;
                 }
+                root.addRecentLanguage(lang);
                 translateTimer.restart();
             }
         }
