@@ -98,7 +98,7 @@ Item {
         if (!lang || lang === "auto") return;
         let list = Array.from(root.recentLanguages).filter(l => l !== lang);
         list.unshift(lang);
-        list = list.slice(0, 6);
+        list = list.slice(0, 4);
         root.recentLanguages = list;
         stateAdapter.recentLanguages = list;
         stateFile.writeAdapter();
@@ -352,65 +352,7 @@ Item {
             }
         }
 
-        // Source language + input
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            spacing: root.padding
-
-            TextCanvas {
-                id: inputCanvas
-                isInput: true
-                Layout.fillHeight: true
-                placeholderText: Translation.tr("Enter text to translate...")
-                onInputTextChanged: translateTimer.restart()
-
-                GroupButton {
-                    baseWidth: 36
-                    implicitHeight: 36
-                    buttonRadius: Appearance.rounding.small
-                    enabled: inputCanvas.inputTextArea.text.trim().length > 0
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        iconSize: Appearance.font.pixelSize.larger
-                        text: "volume_up"
-                        color: enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
-                    }
-                    onClicked: root.speak(inputCanvas.inputTextArea.text, root.sourceLanguage)
-                }
-                GroupButton {
-                    id: pasteButton
-                    baseWidth: 36
-                    implicitHeight: 36
-                    buttonRadius: Appearance.rounding.small
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        iconSize: Appearance.font.pixelSize.larger
-                        text: "content_paste"
-                        color: Appearance.colors.colOnLayer1
-                    }
-                    onClicked: root.inputField.text = Quickshell.clipboardText
-                }
-                GroupButton {
-                    id: deleteButton
-                    baseWidth: 36
-                    implicitHeight: 36
-                    buttonRadius: Appearance.rounding.small
-                    enabled: inputCanvas.inputTextArea.text.length > 0
-                    contentItem: MaterialSymbol {
-                        anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
-                        iconSize: Appearance.font.pixelSize.larger
-                        text: "close"
-                        color: deleteButton.enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
-                    }
-                    onClicked: root.inputField.text = ""
-                }
-            }
-        }
-
-        // Target language + output
+        // Target language + output (on top)
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -429,43 +371,47 @@ Item {
                 onWordClicked: (i, w) => { root.activeWordIndex = i; root.lookupWord(w); }
                 onSynonymChosen: (i, s) => { root.replaceOutputWord(i, s); root.activeWordIndex = -1; root.wordSynonyms = []; }
 
-                GroupButton {
-                    baseWidth: 36
+                RippleButton {
+                    implicitWidth: 36
                     implicitHeight: 36
                     buttonRadius: Appearance.rounding.small
+                    colBackground: "transparent"
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
                     enabled: outputCanvas.displayedText.trim().length > 0
                     contentItem: MaterialSymbol {
                         anchors.centerIn: parent
                         iconSize: Appearance.font.pixelSize.larger
                         text: "volume_up"
-                        color: enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
+                        color: parent.enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
                     }
                     onClicked: root.speak(outputCanvas.displayedText, root.targetLanguage)
                 }
-                GroupButton {
+                RippleButton {
                     id: copyButton
-                    baseWidth: 36
+                    implicitWidth: 36
                     implicitHeight: 36
                     buttonRadius: Appearance.rounding.small
+                    colBackground: "transparent"
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
                     enabled: outputCanvas.displayedText.trim().length > 0
                     contentItem: MaterialSymbol {
                         anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
                         iconSize: Appearance.font.pixelSize.larger
                         text: "content_copy"
                         color: copyButton.enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
                     }
                     onClicked: Quickshell.clipboardText = outputCanvas.displayedText
                 }
-                GroupButton {
+                RippleButton {
                     id: searchButton
-                    baseWidth: 36
+                    implicitWidth: 36
                     implicitHeight: 36
                     buttonRadius: Appearance.rounding.small
+                    colBackground: "transparent"
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
                     enabled: outputCanvas.displayedText.trim().length > 0
                     contentItem: MaterialSymbol {
                         anchors.centerIn: parent
-                        horizontalAlignment: Text.AlignHCenter
                         iconSize: Appearance.font.pixelSize.larger
                         text: "travel_explore"
                         color: searchButton.enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
@@ -477,6 +423,68 @@ Item {
                         }
                         Qt.openUrlExternally(url);
                     }
+                }
+            }
+        }
+
+        // Source language + input (below)
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: root.padding
+
+            TextCanvas {
+                id: inputCanvas
+                isInput: true
+                Layout.fillHeight: true
+                placeholderText: Translation.tr("Enter text to translate...")
+                onInputTextChanged: translateTimer.restart()
+
+                RippleButton {
+                    implicitWidth: 36
+                    implicitHeight: 36
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: "transparent"
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    enabled: inputCanvas.inputTextArea.text.trim().length > 0
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        iconSize: Appearance.font.pixelSize.larger
+                        text: "volume_up"
+                        color: parent.enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
+                    }
+                    onClicked: root.speak(inputCanvas.inputTextArea.text, root.sourceLanguage)
+                }
+                RippleButton {
+                    id: pasteButton
+                    implicitWidth: 36
+                    implicitHeight: 36
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: "transparent"
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        iconSize: Appearance.font.pixelSize.larger
+                        text: "content_paste"
+                        color: Appearance.colors.colOnLayer1
+                    }
+                    onClicked: root.inputField.text = Quickshell.clipboardText
+                }
+                RippleButton {
+                    id: deleteButton
+                    implicitWidth: 36
+                    implicitHeight: 36
+                    buttonRadius: Appearance.rounding.small
+                    colBackground: "transparent"
+                    colBackgroundHover: Appearance.colors.colLayer2Hover
+                    enabled: inputCanvas.inputTextArea.text.length > 0
+                    contentItem: MaterialSymbol {
+                        anchors.centerIn: parent
+                        iconSize: Appearance.font.pixelSize.larger
+                        text: "close"
+                        color: deleteButton.enabled ? Appearance.colors.colOnLayer1 : Appearance.colors.colSubtext
+                    }
+                    onClicked: root.inputField.text = ""
                 }
             }
         }

@@ -52,17 +52,20 @@ Item {
             onClicked: root.targetClicked()
         }
 
-        // Recent-language chips. A plain clipped container (NOT a horizontal
-        // Flickable): a Flickable here forwards horizontal drags to the host
-        // SwipeView and switches sidebar tabs on chip taps.
-        Item {
+        // Recent-language chips, horizontally scrollable. (The earlier tap →
+        // tab-switch was caused by ExtensionManager.setExtensionConfig firing
+        // refreshExtensions — history/recents now live in a private file — not by
+        // this Flickable, so horizontal scrolling is safe to re-enable.)
+        StyledFlickable {
             Layout.fillWidth: true
             implicitHeight: 34
+            contentWidth: chipRow.implicitWidth
+            flickableDirection: Flickable.HorizontalFlick
+            boundsBehavior: Flickable.StopAtBounds
             clip: true
             RowLayout {
                 id: chipRow
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
+                height: parent.height
                 spacing: 5
                 Repeater {
                     model: root.recentLanguages

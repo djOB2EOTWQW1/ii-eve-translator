@@ -15,7 +15,7 @@ Rectangle {
     readonly property string displayedText: isInput
         ? (inputLoader.item ? inputLoader.item.text : "")
         : (root.text.length > 0 ? root.text : "")
-    default property alias actionButtons: actions.groupData
+    default property alias actionButtons: actionsRow.data
     Layout.fillWidth: true
     implicitHeight: Math.max(150, inputColumn.implicitHeight)
     color: Appearance.colors.colLayer2
@@ -103,9 +103,10 @@ Rectangle {
                 }
             }
             Item { Layout.fillWidth: true }
-            ButtonGroup {
-                id: actions
+            RowLayout {
+                id: actionsRow
                 Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                spacing: 4
             }
         }
     }
