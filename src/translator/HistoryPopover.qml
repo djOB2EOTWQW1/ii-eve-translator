@@ -18,6 +18,24 @@ Rectangle {
     border.width: 1
     border.color: Appearance.colors.colOutlineVariant
 
+    ColumnLayout { // Empty state, centered in the whole card
+        anchors.centerIn: parent
+        visible: root.history.length === 0
+        spacing: 6
+        MaterialSymbol {
+            Layout.alignment: Qt.AlignHCenter
+            text: "history"
+            iconSize: 40
+            color: Appearance.colors.colSubtext
+        }
+        StyledText {
+            Layout.alignment: Qt.AlignHCenter
+            text: Translation.tr("No history yet")
+            color: Appearance.colors.colSubtext
+            font.pixelSize: Appearance.font.pixelSize.small
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 10
@@ -43,26 +61,6 @@ Rectangle {
                     color: Appearance.colors.colOnLayer1
                 }
             }
-        }
-
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            visible: root.history.length === 0
-            Item { Layout.fillHeight: true }
-            MaterialSymbol {
-                Layout.alignment: Qt.AlignHCenter
-                text: "history"
-                iconSize: 40
-                color: Appearance.colors.colSubtext
-            }
-            StyledText {
-                Layout.alignment: Qt.AlignHCenter
-                text: Translation.tr("No history yet")
-                color: Appearance.colors.colSubtext
-                font.pixelSize: Appearance.font.pixelSize.small
-            }
-            Item { Layout.fillHeight: true }
         }
 
         StyledListView {

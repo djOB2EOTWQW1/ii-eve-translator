@@ -36,9 +36,8 @@ Item {
     property string sourceLanguage: Config.options.language.translator.sourceLanguage
     property string hostLanguage: targetLanguage
     property string detectedLanguage: ""
-    property string extId: "ii-eve-translator"
-    property var recentLanguages: ExtensionManager.getExtensionConfig(root.extId, "recentLanguages", ["auto", "en"])
-    property var history: ExtensionManager.getExtensionConfig(root.extId, "translationHistory", [])
+    property var recentLanguages: ["auto", "en"]
+    property var history: []
 
     function recordHistory() {
         const input = root.inputField.text.trim();
@@ -49,7 +48,8 @@ Item {
         hist.unshift({ input, output, source: root.sourceLanguage, target: root.targetLanguage });
         hist = hist.slice(0, 13);
         root.history = hist;
-        ExtensionManager.setExtensionConfig(root.extId, "translationHistory", hist);
+        stateAdapter.history = hist;
+        stateFile.writeAdapter();
     }
 
     function restoreHistory(entry) {
@@ -59,6 +59,30 @@ Item {
         Config.options.language.translator.targetLanguage = entry.target;
         root.inputField.text = entry.input;
         translateTimer.restart();
+    }
+
+    // Persist history + recent languages in our OWN state file. NOT via
+    // ExtensionManager.setExtensionConfig: mutating extensionConfigs fires
+    // ExtensionManager.refreshExtensions(), which rebuilds the sidebar SwipeView
+    // and resets the active tab (jumps to Anime). A private file avoids that.
+    FileView {
+        id: stateFile
+        path: `${Directories.state}/ii-eve-translator.json`
+        watchChanges: false
+        onLoaded: {
+            const h = stateAdapter.history;
+            const r = stateAdapter.recentLanguages;
+            root.history = (h && h.length) ? Array.from(h) : [];
+            root.recentLanguages = (r && r.length) ? Array.from(r) : ["auto", "en"];
+        }
+        onLoadFailed: (error) => {
+            if (error === FileViewError.FileNotFound) stateFile.writeAdapter();
+        }
+        JsonAdapter {
+            id: stateAdapter
+            property var history: []
+            property var recentLanguages: ["auto", "en"]
+        }
     }
 
     // States
@@ -76,7 +100,8 @@ Item {
         list.unshift(lang);
         list = list.slice(0, 6);
         root.recentLanguages = list;
-        ExtensionManager.setExtensionConfig(root.extId, "recentLanguages", list);
+        stateAdapter.recentLanguages = list;
+        stateFile.writeAdapter();
     }
 
     function swapLanguages() {
@@ -506,37 +531,25 @@ Item {
         visible: root.showLanguageSelector
         z: 9999
         focus: active
-        sourceComponent: FocusScope {
+        sourceComponent: LanguagePickerDialog {
             anchors.fill: parent
-            focus: true
-            Component.onCompleted: forceActiveFocus()
-            Keys.onPressed: (event) => {
-                if (event.key === Qt.Key_Escape) { root.showLanguageSelector = false; event.accepted = true; }
-            }
-            SelectionDialog {
-                id: languageSelectorDialog
-                anchors.fill: parent
-                titleText: Translation.tr("Select Language")
-                items: root.languages
-                defaultChoice: root.languageSelectorTarget ? root.targetLanguage : root.sourceLanguage
-                onCanceled: () => {
-                    root.showLanguageSelector = false;
-                }
-                onSelected: (result) => {
-                    root.showLanguageSelector = false;
-                    if (!result || result.length === 0) return; // No selection made
+            languages: root.languages
+            current: root.languageSelectorTarget ? root.targetLanguage : root.sourceLanguage
+            onCanceled: root.showLanguageSelector = false
+            onSelected: (result) => {
+                root.showLanguageSelector = false;
+                if (!result || result.length === 0) return; // No selection made
 
-                    if (root.languageSelectorTarget) {
-                        root.targetLanguage = result;
-                        Config.options.language.translator.targetLanguage = result; // Save to config
-                    } else {
-                        root.sourceLanguage = result;
-                        Config.options.language.translator.sourceLanguage = result; // Save to config
-                    }
-
-                    root.addRecentLanguage(result);
-                    translateTimer.restart(); // Restart translation after language change
+                if (root.languageSelectorTarget) {
+                    root.targetLanguage = result;
+                    Config.options.language.translator.targetLanguage = result; // Save to config
+                } else {
+                    root.sourceLanguage = result;
+                    Config.options.language.translator.sourceLanguage = result; // Save to config
                 }
+
+                root.addRecentLanguage(result);
+                translateTimer.restart(); // Restart translation after language change
             }
         }
     }
