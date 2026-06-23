@@ -15,7 +15,7 @@ Rectangle {
     readonly property string displayedText: isInput
         ? (inputLoader.item ? inputLoader.item.text : "")
         : (root.text.length > 0 ? root.text : "")
-    default property alias actionButtons: actions.data
+    default property alias actionButtons: actions.groupData
     Layout.fillWidth: true
     implicitHeight: Math.max(150, inputColumn.implicitHeight)
     color: Appearance.colors.colLayer2

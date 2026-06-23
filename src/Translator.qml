@@ -471,12 +471,20 @@ Item {
         active: false
         visible: active
         z: 9998
+        focus: active
         function open() { active = true }
         function close() { active = false }
-        sourceComponent: Item {
-            MouseArea { // scrim
+        sourceComponent: FocusScope {
+            anchors.fill: parent
+            focus: true
+            Component.onCompleted: forceActiveFocus()
+            Keys.onPressed: (event) => {
+                if (event.key === Qt.Key_Escape) { historyPopover.close(); event.accepted = true; }
+            }
+            Rectangle { // Dim scrim that blocks the panes behind
                 anchors.fill: parent
-                onClicked: historyPopover.close()
+                color: Appearance.colors.colScrim
+                MouseArea { anchors.fill: parent; onClicked: historyPopover.close() }
             }
             HistoryPopover {
                 anchors.centerIn: parent
@@ -497,28 +505,38 @@ Item {
         active: root.showLanguageSelector
         visible: root.showLanguageSelector
         z: 9999
-        sourceComponent: SelectionDialog {
-            id: languageSelectorDialog
-            titleText: Translation.tr("Select Language")
-            items: root.languages
-            defaultChoice: root.languageSelectorTarget ? root.targetLanguage : root.sourceLanguage
-            onCanceled: () => {
-                root.showLanguageSelector = false;
+        focus: active
+        sourceComponent: FocusScope {
+            anchors.fill: parent
+            focus: true
+            Component.onCompleted: forceActiveFocus()
+            Keys.onPressed: (event) => {
+                if (event.key === Qt.Key_Escape) { root.showLanguageSelector = false; event.accepted = true; }
             }
-            onSelected: (result) => {
-                root.showLanguageSelector = false;
-                if (!result || result.length === 0) return; // No selection made
-
-                if (root.languageSelectorTarget) {
-                    root.targetLanguage = result;
-                    Config.options.language.translator.targetLanguage = result; // Save to config
-                } else {
-                    root.sourceLanguage = result;
-                    Config.options.language.translator.sourceLanguage = result; // Save to config
+            SelectionDialog {
+                id: languageSelectorDialog
+                anchors.fill: parent
+                titleText: Translation.tr("Select Language")
+                items: root.languages
+                defaultChoice: root.languageSelectorTarget ? root.targetLanguage : root.sourceLanguage
+                onCanceled: () => {
+                    root.showLanguageSelector = false;
                 }
+                onSelected: (result) => {
+                    root.showLanguageSelector = false;
+                    if (!result || result.length === 0) return; // No selection made
 
-                root.addRecentLanguage(result);
-                translateTimer.restart(); // Restart translation after language change
+                    if (root.languageSelectorTarget) {
+                        root.targetLanguage = result;
+                        Config.options.language.translator.targetLanguage = result; // Save to config
+                    } else {
+                        root.sourceLanguage = result;
+                        Config.options.language.translator.sourceLanguage = result; // Save to config
+                    }
+
+                    root.addRecentLanguage(result);
+                    translateTimer.restart(); // Restart translation after language change
+                }
             }
         }
     }

@@ -52,15 +52,17 @@ Item {
             onClicked: root.targetClicked()
         }
 
-        // Recent-language chips
-        StyledFlickable {
+        // Recent-language chips. A plain clipped container (NOT a horizontal
+        // Flickable): a Flickable here forwards horizontal drags to the host
+        // SwipeView and switches sidebar tabs on chip taps.
+        Item {
             Layout.fillWidth: true
             implicitHeight: 34
-            contentWidth: chipRow.implicitWidth
             clip: true
             RowLayout {
                 id: chipRow
-                height: parent.height
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
                 spacing: 5
                 Repeater {
                     model: root.recentLanguages

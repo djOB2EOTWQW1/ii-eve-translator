@@ -13,7 +13,7 @@ Rectangle {
     signal entryPicked(var entry)
     signal closeRequested()
 
-    color: Appearance.colors.colLayer1
+    color: Appearance.m3colors.m3surfaceContainerHigh
     radius: Appearance.rounding.normal
     border.width: 1
     border.color: Appearance.colors.colOutlineVariant
@@ -49,6 +49,7 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             visible: root.history.length === 0
+            Item { Layout.fillHeight: true }
             MaterialSymbol {
                 Layout.alignment: Qt.AlignHCenter
                 text: "history"
@@ -61,6 +62,7 @@ Rectangle {
                 color: Appearance.colors.colSubtext
                 font.pixelSize: Appearance.font.pixelSize.small
             }
+            Item { Layout.fillHeight: true }
         }
 
         StyledListView {
