@@ -199,21 +199,18 @@ Item {
         }
     }
 
-    Process {
-        id: ttsProc
-        command: ["true"]
-    }
-
+    // Fire-and-forget TTS. A managed Process with a toggled `running` did not
+    // reliably launch the player; execDetached runs the command detached in the
+    // session (same way the CLI does) and plays through mpv.
     function speak(text, lang) {
         const t = (text || "").trim();
         if (t.length === 0) return;
-        ttsProc.running = false;
-        ttsProc.command = ["bash", "-c",
+        const l = lang || "auto";
+        Quickshell.execDetached(["bash", "-c",
             `trans -speak -no-translate -no-bidi`
-            + ` -source '${StringUtils.shellSingleQuoteEscape(lang || "auto")}'`
-            + ` -target '${StringUtils.shellSingleQuoteEscape(lang || "auto")}'`
-            + ` '${StringUtils.shellSingleQuoteEscape(t)}'`];
-        ttsProc.running = true;
+            + ` -source '${StringUtils.shellSingleQuoteEscape(l)}'`
+            + ` -target '${StringUtils.shellSingleQuoteEscape(l)}'`
+            + ` '${StringUtils.shellSingleQuoteEscape(t)}'`]);
     }
 
     property var dictionaryEntries: []

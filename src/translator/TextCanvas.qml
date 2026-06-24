@@ -40,6 +40,7 @@ Rectangle {
             active: root.isInput
             visible: root.isInput
             Layout.fillWidth: true
+            Layout.fillHeight: true
             sourceComponent: StyledTextArea { // Input area
                 id: inputTextArea
                 placeholderText: root.placeholderText
@@ -58,6 +59,7 @@ Rectangle {
             active: !root.isInput
             visible: !root.isInput
             Layout.fillWidth: true
+            Layout.fillHeight: true
             sourceComponent: (root.interactive && root.text.length > 0)
                 ? interactiveComp : plainComp
             Component {
@@ -84,8 +86,6 @@ Rectangle {
                 }
             }
         }
-
-        Item { Layout.fillHeight: true } 
 
         RowLayout { // Status row
             Layout.fillWidth: true

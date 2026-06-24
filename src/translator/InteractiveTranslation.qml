@@ -26,7 +26,7 @@ Flow {
             text: modelData + " "
             font.pixelSize: Appearance.font.pixelSize.small
             color: Appearance.colors.colOnLayer1
-            font.underline: hover.hovered
+            font.underline: hover.containsMouse
             MouseArea {
                 id: hover
                 anchors.fill: parent
