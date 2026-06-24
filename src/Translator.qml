@@ -180,7 +180,10 @@ Item {
 
     Process {
         id: getLanguagesProc
-        command: ["trans", "-list-languages", "-no-bidi"]
+        // Use language CODES (en, ru, …), not endonyms. trans accepts codes for
+        // translation AND `-speak`; endonyms ("Русский") break TTS
+        // ("Voice output isn't available …"). Codes keep everything consistent.
+        command: ["trans", "-list-codes", "-no-bidi"]
         property list<string> bufferList: ["auto"]
         running: true
         stdout: SplitParser {
@@ -196,21 +199,41 @@ Item {
             langs.unshift("auto");
             root.languages = langs;
             getLanguagesProc.bufferList = []; // Clear the buffer
+
+            // Migrate any previously-saved endonym selections to valid codes so
+            // TTS works without the user having to re-pick everything.
+            const valid = new Set(langs);
+            if (root.sourceLanguage !== "auto" && !valid.has(root.sourceLanguage)) {
+                root.sourceLanguage = "auto";
+                Config.options.language.translator.sourceLanguage = "auto";
+            }
+            if (!valid.has(root.targetLanguage)) {
+                root.targetLanguage = "en";
+                Config.options.language.translator.targetLanguage = "en";
+            }
+            const cleanRecents = Array.from(root.recentLanguages).filter(l => valid.has(l));
+            if (cleanRecents.length !== root.recentLanguages.length) {
+                root.recentLanguages = cleanRecents.length ? cleanRecents : ["auto", "en"];
+                stateAdapter.recentLanguages = root.recentLanguages;
+                stateFile.writeAdapter();
+            }
         }
     }
 
-    // Fire-and-forget TTS. A managed Process with a toggled `running` did not
-    // reliably launch the player; execDetached runs the command detached in the
-    // session (same way the CLI does) and plays through mpv.
+    // TTS via a managed Process so a new click cancels the previous playback.
+    // Requires a language CODE (en/ru) — endonyms break trans -speak.
+    Process { id: ttsProc }
     function speak(text, lang) {
         const t = (text || "").trim();
         if (t.length === 0) return;
         const l = lang || "auto";
-        Quickshell.execDetached(["bash", "-c",
+        ttsProc.running = false;
+        ttsProc.command = ["bash", "-c",
             `trans -speak -no-translate -no-bidi`
             + ` -source '${StringUtils.shellSingleQuoteEscape(l)}'`
             + ` -target '${StringUtils.shellSingleQuoteEscape(l)}'`
-            + ` '${StringUtils.shellSingleQuoteEscape(t)}'`]);
+            + ` '${StringUtils.shellSingleQuoteEscape(t)}'`];
+        ttsProc.running = true;
     }
 
     property var dictionaryEntries: []
