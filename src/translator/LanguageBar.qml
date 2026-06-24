@@ -5,6 +5,7 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 import QtQuick
 import QtQuick.Layouts
+import "LangNames.js" as LangNames
 
 Item {
     id: root
@@ -26,8 +27,8 @@ Item {
 
         LanguageSelectorButton {
             displayText: root.sourceLanguage === "auto" && root.detectedLanguage
-                ? Translation.tr("auto (%1)").arg(root.detectedLanguage)
-                : root.sourceLanguage
+                ? Translation.tr("auto (%1)").arg(LangNames.display(root.detectedLanguage))
+                : LangNames.display(root.sourceLanguage)
             onClicked: root.sourceClicked()
         }
 
@@ -48,7 +49,7 @@ Item {
         }
 
         LanguageSelectorButton {
-            displayText: root.targetLanguage
+            displayText: LangNames.display(root.targetLanguage)
             onClicked: root.targetClicked()
         }
 
@@ -80,7 +81,7 @@ Item {
                         contentItem: StyledText {
                             id: chipText
                             anchors.centerIn: parent
-                            text: modelData
+                            text: LangNames.display(modelData)
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             color: Appearance.colors.colOnSecondaryContainer
                         }

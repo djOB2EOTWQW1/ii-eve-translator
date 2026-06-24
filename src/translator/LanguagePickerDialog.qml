@@ -5,6 +5,7 @@ import qs.modules.common.functions
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import "LangNames.js" as LangNames
 
 // Language picker with a search/filter field. Replaces the host SelectionDialog
 // (which has no search) for the long `trans` language list.
@@ -22,7 +23,9 @@ Item {
     readonly property var filtered: {
         const q = searchField.text.trim().toLowerCase();
         if (q.length === 0) return root.languages;
-        return root.languages.filter(l => l.toLowerCase().indexOf(q) !== -1);
+        return root.languages.filter(l =>
+            l.toLowerCase().indexOf(q) !== -1
+            || LangNames.display(l).toLowerCase().indexOf(q) !== -1);
     }
 
     Rectangle { // Scrim
@@ -81,7 +84,7 @@ Item {
                         anchors.left: parent.left
                         anchors.leftMargin: 12
                         anchors.verticalCenter: parent.verticalCenter
-                        text: modelData
+                        text: modelData === "auto" ? "auto" : (LangNames.display(modelData) + "  (" + modelData + ")")
                         color: modelData === root.current
                             ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer1
                         font.pixelSize: Appearance.font.pixelSize.small

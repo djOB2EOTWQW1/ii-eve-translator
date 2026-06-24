@@ -6,11 +6,14 @@ import qs.modules.common.functions
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import "LangNames.js" as LangNames
 
 Rectangle {
     id: root
     property var history: []
     signal entryPicked(var entry)
+    signal entryDeleted(var entry)
+    signal clearRequested()
     signal closeRequested()
 
     color: Appearance.m3colors.m3surfaceContainerHigh
@@ -49,6 +52,20 @@ Rectangle {
                 font.pixelSize: Appearance.font.pixelSize.normal
                 color: Appearance.colors.colOnLayer1
             }
+            RippleButton { // clear all
+                visible: root.history.length > 0
+                implicitWidth: 30
+                implicitHeight: 30
+                buttonRadius: Appearance.rounding.full
+                onClicked: root.clearRequested()
+                contentItem: MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: "delete_sweep"
+                    iconSize: 18
+                    color: Appearance.colors.colOnLayer1
+                }
+                StyledToolTip { text: Translation.tr("Clear all") }
+            }
             RippleButton {
                 implicitWidth: 30
                 implicitHeight: 30
@@ -79,26 +96,47 @@ Rectangle {
                 colBackground: Appearance.colors.colLayer2
                 colBackgroundHover: Appearance.colors.colLayer2Hover
                 onClicked: root.entryPicked(modelData)
-                contentItem: ColumnLayout {
+                contentItem: RowLayout {
                     id: rowCol
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.margins: 10
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
-                    StyledText {
+                    spacing: 6
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        text: modelData.input
-                        elide: Text.ElideRight
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: Appearance.colors.colOnLayer2
+                        spacing: 2
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: modelData.input
+                            elide: Text.ElideRight
+                            font.pixelSize: Appearance.font.pixelSize.small
+                            color: Appearance.colors.colOnLayer2
+                        }
+                        StyledText {
+                            Layout.fillWidth: true
+                            text: Translation.tr("%1 → %2 · %3")
+                                .arg(LangNames.display(modelData.source))
+                                .arg(LangNames.display(modelData.target))
+                                .arg(modelData.output)
+                            elide: Text.ElideRight
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.colors.colSubtext
+                        }
                     }
-                    StyledText {
-                        Layout.fillWidth: true
-                        text: Translation.tr("%1 → %2 · %3").arg(modelData.source).arg(modelData.target).arg(modelData.output)
-                        elide: Text.ElideRight
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Appearance.colors.colSubtext
+                    RippleButton { // delete this entry
+                        implicitWidth: 28
+                        implicitHeight: 28
+                        buttonRadius: Appearance.rounding.full
+                        colBackground: "transparent"
+                        colBackgroundHover: Appearance.colors.colLayer2Hover
+                        onClicked: root.entryDeleted(modelData)
+                        contentItem: MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: "close"
+                            iconSize: 16
+                            color: Appearance.colors.colSubtext
+                        }
                     }
                 }
             }

@@ -46,7 +46,7 @@ Item {
         let hist = Array.from(root.history).filter(e =>
             !(e.input === input && e.source === root.sourceLanguage && e.target === root.targetLanguage));
         hist.unshift({ input, output, source: root.sourceLanguage, target: root.targetLanguage });
-        hist = hist.slice(0, 13);
+        hist = hist.slice(0, 50);
         root.history = hist;
         stateAdapter.history = hist;
         stateFile.writeAdapter();
@@ -59,6 +59,21 @@ Item {
         Config.options.language.translator.targetLanguage = entry.target;
         root.inputField.text = entry.input;
         translateTimer.restart();
+    }
+
+    function clearHistory() {
+        root.history = [];
+        stateAdapter.history = [];
+        stateFile.writeAdapter();
+    }
+
+    function deleteHistoryEntry(entry) {
+        const hist = Array.from(root.history).filter(e =>
+            !(e.input === entry.input && e.output === entry.output
+              && e.source === entry.source && e.target === entry.target));
+        root.history = hist;
+        stateAdapter.history = hist;
+        stateFile.writeAdapter();
     }
 
     // Persist history + recent languages in our OWN state file. NOT via
@@ -549,6 +564,8 @@ Item {
                     root.restoreHistory(entry);
                     historyPopover.close();
                 }
+                onEntryDeleted: (entry) => root.deleteHistoryEntry(entry)
+                onClearRequested: root.clearHistory()
             }
         }
     }
